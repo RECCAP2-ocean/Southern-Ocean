@@ -1,0 +1,8 @@
+matplotlib
+xarray
+pandas
+numpy
+pooch
+seaborn
+-e git://github.com/luke-gregor/OceanDataTools.git#egg=elasticutils
+-e git://github.com/luke-gregor/SeaFlux.git#egg=elasticutils
