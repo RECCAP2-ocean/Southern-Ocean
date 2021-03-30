@@ -3,6 +3,7 @@ xarray
 pandas
 numpy
 pooch
+fsspec
 seaborn
--e git://github.com/luke-gregor/OceanDataTools.git#egg=elasticutils
--e git://github.com/luke-gregor/SeaFlux.git#egg=elasticutils
+munch
+mergedeep
