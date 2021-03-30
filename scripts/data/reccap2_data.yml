@@ -12,7 +12,6 @@ soccom_liar:
             We have taken advantage of the release of version 2 of the Global Data Analysis Project data product (Olsen et al. 2016) to refine the locally interpolated alkalinity regression (LIAR) code for global estimation of total titration alkalinity of seawater (AT), and to extend the method to also produce estimates of nitrate (N) and in situ pH (total scale). The updated MATLAB software and methods are distributed as Supporting Information for this article and referred to as LIAR version 2 (LIARv2), locally interpolated nitrate regression (LINR), and locally interpolated pH regression (LIPHR). Collectively they are referred to as locally interpolated regressions (LIRs). Relative to LIARv1, LIARv2 has an 18% lower average AT estimate root mean squared error (RMSE), improved uncertainty estimates, and fewer regions in which the method has little or no available training data. LIARv2, LINR, and LIPHR produce estimates globally with skill that is comparable to or better than regional alternatives used in their respective regions. LIPHR pH estimates have an optional adjustment to account for ongoing ocean acidification. We have used the improved uncertainty estimates to develop LIR functionality that selects the lowest‐uncertainty estimate from among possible estimates. Current and future versions of LIR software will be available on GitHub at https://github.com/BRCScienceProducts/LIRs.
     
 
-
 socat_pco2:
     name: SOCAT v2020 gridded
     dest: ../data/raw/SOCAT_pCO2/

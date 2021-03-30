@@ -1,5 +1,8 @@
 # repo specific ignores
-data/raw/
+**/*.nc
+data/**
+**/*.tar*
+**/*.zip*
 
 
 # Byte-compiled / optimized / DLL files
@@ -60,7 +63,6 @@ coverage.xml
 *.pot
 
 # Django stuff:
-*.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
@@ -132,5 +134,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-**/*.nc
 **/.DS_Store
