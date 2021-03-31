@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 
 
-def style_line_subplot(ax, add_zero_line=True, xlim=None):
+def style_line_subplot(ax, add_zero_line=True, xlim=None, y_range=None):
     import numpy as np
     import pandas as pd
     
@@ -20,11 +20,17 @@ def style_line_subplot(ax, add_zero_line=True, xlim=None):
     ax.set_xticks(np.arange('1980', '2020', 5, dtype='datetime64[Y]'))
     ax.set_xticklabels(np.arange(1980, 2020, 5))
     ax.set_xlim(*xlim)
+    
+    if y_range is not None:
+        center = np.mean(ax.get_ylim())
+        upp = center + y_range/2
+        low = center - y_range/2
+        ax.set_ylim(low, upp)
         
     return ax
 
 
-def plot_ensemble(da, ax=None, dim='variable', draw_stdev=True, color='C0', name='', **kwargs):
+def plot_ensemble(da, ax=None, dim='variable', draw_stdev=True, y_range=None, color='C0', name='', **kwargs):
     if ax is None:
         ax = plt.gca()
     
@@ -39,12 +45,12 @@ def plot_ensemble(da, ax=None, dim='variable', draw_stdev=True, color='C0', name
         upr = avg + std
         lwr = avg - std
         # drawn first to maintain zorder
-        ax.fill_between(x, upr, lwr, color=color, alpha=0.25, **kwargs)
+        ax.fill_between(x, upr, lwr, color=color, alpha=0.2, **kwargs)
         
-    ens.plot(c=color, lw=0.5, alpha=0.7, ax=ax, add_legend=False, hue=dim, **kwargs)
+    ens.plot(c=color, lw=0.5, alpha=0.6, ax=ax, add_legend=False, hue=dim, **kwargs)
     avg.plot(c=color, lw=2.5, alpha=1.0, ax=ax, label=name, **kwargs)
     
     xlim = x.min(), x.max()
-    ax = style_line_subplot(ax, add_zero_line=False, xlim=xlim)
+    ax = style_line_subplot(ax, add_zero_line=False, xlim=xlim, y_range=y_range)
     
     return ax

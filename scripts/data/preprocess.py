@@ -55,6 +55,7 @@ def rename_coords(
         lat=lat, 
         lon=lon,
         time=time,
+        region=region,
         **kwargs,
     )
     
@@ -63,7 +64,7 @@ def rename_coords(
         for new, old in coord_names.items():
             if key in old:
                 rename[key] = new
-    
+                
     xds = xds.rename(**rename)
     
     if rename != {}:

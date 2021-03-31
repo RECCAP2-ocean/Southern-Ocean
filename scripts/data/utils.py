@@ -21,6 +21,40 @@ class RECCAP_dict(_munch):
                 if isinstance(self[k], self.__class__):
                     dataarrays += self[k].toDataArray(),
             return merge(dataarrays)
+        
+    def __repr__(self):
+        def get_info(obj):
+            unit = obj.attrs.get('units', '-')
+            dims = ".".join([f"{k}({obj[k].size})" for k in obj.dims])
+            unit = f"[UNITS]: {unit}; "
+            dims = f"[DIMS]: {dims}"
+            info = f"{unit: <32}{dims}"
+            return info
+        def walk_through_dictionary(d):
+            new_dict = {}
+            for k, v in d.items():
+                if isinstance(v, dict):
+                    new_dict[f"{k} {'-'*(76 - len(k))}"] = walk_through_dictionary(v)
+                elif isinstance(v, xr.DataArray):
+                    new_dict[f"{k: <10}"] = get_info(v)
+            return new_dict
+        import json
+        import xarray as xr
+        import re
+        import os
+        
+        printable = walk_through_dictionary(self)
+        pretty = f"{str(self.__class__)}"
+        pretty += json.dumps(printable, indent=2, sort_keys=True)
+        pretty = re.sub('["{},:;]', '', pretty)
+        
+        m = self.get('not_matched', [])
+        if m != []:
+            s = "\n    "
+            not_matched = s + s.join([os.path.relpath(f) for f in m])
+            pretty += f"  not_matched {'='*69}{not_matched}"
+
+        return pretty
 
         
 def read_reccap2_products(flist, fname_specs=[]):
@@ -65,7 +99,7 @@ def read_reccap2_products(flist, fname_specs=[]):
             else:
                 failed += f,
     merged = mergedeep.merge({}, *output)            
-    merged['failed'] = failed
+    merged['not_matched'] = failed
     obj = RECCAP_dict.fromDict(merged)
     
     return obj

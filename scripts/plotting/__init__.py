@@ -21,6 +21,7 @@ def set_styles():
     mpl.rcParams['axes.spines.top'] = False
     mpl.rcParams['xtick.major.size'] = 2.5
     mpl.rcParams['ytick.major.size'] = 2.5
+    mpl.rcParams['xtick.major.width'] = 0.5
     mpl.rcParams['xtick.minor.size'] = 0
     mpl.rcParams['ytick.minor.size'] = 0
     
