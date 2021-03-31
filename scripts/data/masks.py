@@ -1,15 +1,25 @@
+
+
+def reccap2_ocean_masks(url, dest):
+    from pathlib import Path as posixpath
+    import pooch
+    import xarray as xr
+    
+    fname = pooch.retrieve(url, None, posixpath(url).name, dest)
+    ds = xr.open_dataset(fname)
+    
+    return ds
+
+
 def get_southern_ocean_subregions(
     url='https://github.com/RECCAP2-ocean/shared-resources/raw/master/regions/RECCAP2_region_masks_all.nc',
     dest='../data/regions/'
 ):
-    import pooch
     import xarray as xr
     import pandas as pd
-    from pathlib import Path as posixpath
     import itertools
     
-    fname = pooch.retrieve(url, None, posixpath(url).name, dest)
-    ds = xr.open_dataset(fname)
+    ds = reccap2_ocean_masks(url, dest)
 
     mask = ds.southern
     

@@ -13,7 +13,7 @@ def style_line_subplot(ax, add_zero_line=True, xlim=None, y_range=None):
     plt.xlabel('')
     
     if ax.get_ylim()[0] < 0 < ax.get_ylim()[1]:
-        ax.axhline(0, color='#CCCCCC', ls='-', lw=0.8, zorder=0)
+        ax.axhline(0, color='k', ls='--', lw=0.5, zorder=0)
     
     if xlim is None:
         xlim = ax.get_xlim()
@@ -30,7 +30,7 @@ def style_line_subplot(ax, add_zero_line=True, xlim=None, y_range=None):
     return ax
 
 
-def plot_ensemble(da, ax=None, dim='variable', draw_stdev=True, y_range=None, color='C0', name='', **kwargs):
+def plot_ensemble_lines(da, ax=None, dim='variable', draw_stdev=True, y_range=None, color='C0', name='', **kwargs):
     if ax is None:
         ax = plt.gca()
     

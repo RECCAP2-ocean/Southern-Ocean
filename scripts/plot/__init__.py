@@ -1,8 +1,24 @@
 from matplotlib import pyplot as plt
 from .line_plots import *
+from .maps import *
 
 
-def set_styles():
+def _create_colormap_dict():
+    from cmocean import cm as cmo
+    from matplotlib import cm
+    from munch import Munch as munch
+    
+    cm = munch(dict(
+        flux=cm.RdBu_r,
+        flux_std=cm.Reds,
+        pco2=cm.Spectral_r,
+        temp=cmo.thermal,
+    ))
+    
+    return cm
+
+
+def _set_styles():
     import matplotlib as mpl
     import seaborn as sns
     from cycler import cycler
@@ -31,8 +47,8 @@ def set_styles():
     mpl.rcParams['legend.facecolor'] = 'none'
     mpl.rcParams['legend.edgecolor'] = 'none'
     
-    mpl.rcParams['figure.subplot.hspace'] = 0.1
-    mpl.rcParams['figure.subplot.wspace'] = 0.1
+    mpl.rcParams['figure.subplot.hspace'] = 0.07
+    mpl.rcParams['figure.subplot.wspace'] = 0.07
     mpl.rcParams['figure.subplot.left'] = 0.05
     mpl.rcParams['figure.subplot.right'] = 0.95
     mpl.rcParams['figure.subplot.bottom'] = 0.075
@@ -43,4 +59,5 @@ def set_styles():
     mpl.rcParams['figure.figsize'] = [6, 4]
     
 
-set_styles()
+_set_styles()
+cm = _create_colormap_dict()

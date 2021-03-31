@@ -143,14 +143,33 @@ def center_time_on_15th(xds):
     return xds
     
 
-def reccap2_dataprep(decode_times=False):
+def preprocess(
+    decode_times=False, 
+    rename_coordinates=True, 
+    center_months=True,
+    lon_0_360=True,
+    transpose_dims=True,
+):
+    """
+    A function generator that can be used as follows:
+        reccap2_formatted_xds = xr.open_mfdataset(
+            fname, decode_times=False,
+            preprocess=data.preprocess(decode_times=True))
+        
+    There are several options that can be switched on or off with boolean.
+    All changes are documented and appended to xds.attrs.history
+    """
     def reccap2_dataprep(ds):
-        ds = rename_coords(ds)
+        if rename_coordinates:
+            ds = rename_coords(ds)
         if decode_times:
             ds = time_decoder(ds)
-        ds = center_time_on_15th(ds)
-        ds = order_lon_360(ds)
-        ds = transpose(ds)
+        if center_months:
+            ds = center_time_on_15th(ds)
+        if lon_0_360:
+            ds = order_lon_360(ds)
+        if transpose_dims:
+            ds = transpose(ds)
         return ds
     return reccap2_dataprep
 

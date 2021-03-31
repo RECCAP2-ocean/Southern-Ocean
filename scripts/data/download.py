@@ -24,6 +24,16 @@ cache = f"{prefix}filelist.cache"
 
 
 def read_catalog(catalog_name):
+    """
+    Used to read YAML files that contain download information. 
+    YAML file entries require:
+        url: remote path to file/s. Can contain *
+        dest: where the file/s will be stored
+        meta:
+            doi: url to the data source
+            description: info about the data
+            citation: how to cite this dataset
+    """
     from dotenv import find_dotenv
     from envyaml import EnvYAML
 
@@ -39,318 +49,34 @@ def read_catalog(catalog_name):
     return catalog
 
 
-def get_cache_path(url, cache_dir=None):
-    """
-    Creates the path for the cache used to store remote file names
-    Saves time in updating the
-    """
-    import hashlib
-    import tempfile
-    from pathlib import Path as posixpath
-
-    if cache_dir is None:
-        cache_dir = tempfile.gettempdir()
-
-    cache_fname = hashlib.md5(str(url).encode()).hexdigest()
-    cache_path = posixpath(f"{cache_dir}/{cache_fname}")
-
-    return cache_path
-
-
-def abbreviate_list_as_str(ls):
-    """
-    Abbreviates a list when it's too long to show everything
-    Used mostly in logging.DEBUG
-    """
-    n = len(ls)
-    if n > 4:
-        return f"{str(ls[:2])[:-1]},\n...\n{str(ls[-2:])[1:]}"
-    else:
-        return f"{str(ls)}"
-
-
-def get_url_list(
-    url,
-    username=None,
-    password=None,
-    cache_path=None,
-    use_cache=True,
-    raise_on_empty=True,
-):
-    """
-    If a url has a wildcard (*) value, remote files will be searched for.
-    Leverages off the `fsspec` package. This doesnt work for all HTTP urls.
-    Parameters
-    ----------
-    username: str
-        if required for given url and protocol (e.g. FTP)
-    password: str
-        if required for given url and protocol (e.g. FTP)
-    cache_path: str
-        the path where the cached files will be stored
-    use_cache: bool
-        if there is a file with cached remote urls, then those
-        values will be returned as a list
-    raise_on_empty: bool
-        if there are no files, raise an error or silently pass
-    Returns
-    -------
-    a sorted list of urls
-    """
-    from pathlib import Path as posixpath
-    from urllib.parse import urlparse
-
-    from aiohttp import ClientResponseError
-    from pandas import Series, read_csv
-
-    if cache_path is None:
-        cache_path = get_cache_path(url)
-    else:
-        cache_path = posixpath(cache_path)
-
-    if cache_path.is_file() and use_cache:
-        flist = read_csv(str(cache_path), index_col=False).iloc[:, 0].to_list()
-        logging.log(15, f"Fetched {len(flist)} files from flist cache: {cache_path}")
-        logging.debug(abbreviate_list_as_str(flist))
-
-        return sorted(flist)
-
-    purl = urlparse(url)
-    protocol = purl.scheme
-    host = purl.netloc
-    path = purl.path
-
-    logging.log(15, f"Fetching filenames from {url}")
-
-    props = {"protocol": protocol}
-    if not protocol.startswith("http"):
-        props.update({"host": host})
-    if username is not None:
-        props["username"] = username
-    if password is not None:
-        props["password"] = password
-
-    fs = fsspec.filesystem(**props)
-    if protocol.startswith("http"):
-        path = f"{protocol}://{host}/{path}"
-        try:
-            flist = fs.glob(path)
-        except ClientResponseError:
-            if raise_on_empty:
-                raise ValueError(f"No files could be found for the url: {url}")
-            else:
-                return []
-    else:
-        flist = [f"{protocol}://{host}{f}" for f in fs.glob(path)]
-
-    no_files = len(flist) == 0
-    if no_files and raise_on_empty:
-        raise ValueError(f"No files could be found for the url: {url}")
-
-    if no_files and not use_cache:
-        return flist
-
-    cache_path.parent.mkdir(exist_ok=True, parents=True)
-    # writing url list to cache file
-    Series(flist, dtype="str").to_csv(str(cache_path), index=False)
-    logging.log(15, f"Cached {len(flist)} urls to: {cache_path}")
-    logging.debug(abbreviate_list_as_str(flist))
-
-    return sorted(flist)
-
-
-def download_urls(
-    urls, 
-    n_jobs=8, 
-    dest_path="./{t:%Y}/{t:%m}", 
-    date_format="%Y%m%d", 
-    **kwargs
-):
-    """
-    Downloads the given list of urls to a specified destination path using
-    the `pooch` package in Python.
-    NOTE: `fsspec` is not used as it fails for some FTP and SFTP protocols.
-    Parameters
-    ----------
-    urls: list
-        the list of URLS to download - may not contain wildcards
-    dest_path: str
-        the location where the files will be downloaded to. May contain
-        date formatters that are labelled with "{t:%fmt} to create subfolders
-    date_format: str
-        the format of the date in the urls that will be used to fill in the
-        date formatters in `dest_path` kwarg. Matches limited to 1970s to 2020s
-    kwargs: key=value
-        will be passed to pooch.retrieve. Can be used to set the downloader
-        with username and password and the processor for unzipping. See
-        `choose_downloader` for more info.
-    Returns
-    -------
-    file names of downloaded urls
-    """
-    import pandas as pd
-    from datetime_matcher import DatetimeMatcher
-    from pooch import Unzip
-
-    re_date = DatetimeMatcher()
-    # format will limit between 1970s and 2020s (with exceptions)
-    re_date.format_code_to_regex_map["Y"] = "[12][90][789012][0-9]"
-
-    download_args = []
-    for url in urls:
-        if "{t:" in dest_path:
-            date = re_date.extract_datetime(date_format, url)
-            if date is not None:
-                date = pd.to_datetime(date, format=date_format)
-                fpath = dest_path.format(t=date)
-            else:
-                raise ValueError("No date found in the dest_path")
-        else:
-            fpath = dest_path
-        
-        download_args += dict(
-            url=url, 
-            known_hash=None, 
-            fname=url.split("/")[-1], 
-            path=fpath, 
-            processor=choose_processor(url), 
-            **kwargs),
-    
-    n_jobs = min([n_jobs, len(download_args)])
-    if n_jobs == 1:
-        flist = [_pooch_retrieve_handling(d) for d in download_args]
-    elif 1 < n_jobs <= 8:
-        from joblib import Parallel, delayed
-        [setattr(d['downloader'], 'progressbar', False) for d in download_args]
-        flist = Parallel(n_jobs=n_jobs, prefer="threads")(
-            delayed(_pooch_retrieve_handling)(d) for d in download_args)
-    else:
-        raise Exception('n_jobs must be between 1 and 8 to avoid too many requests')
-    
-    failed = [f for o, f in flist if o > 0]
-    passed = [f for o, f in flist if o == 0]
-    logging.info(
-        f'SUMMARY: Retrieved={len(passed)}, Failed={len(failed)} listing failed below: \n' + 
-        '\n'.join(failed)
-    )
-    
-    return passed
-
-
-def _pooch_retrieve_handling(kwargs):
-    
-    pooch.get_logger().setLevel(1000)
-    url = kwargs.get('url')
-    
-    try:
-        logging.log(15, f"retrieving {url}")
-        return 0, pooch.retrieve(**kwargs)
-    except:
-        pass
-    
-    try:
-        # this is for when the server does not allow the file size to be fetched
-        kwargs['downloader'].progressbar = False
-        return 0, pooch.retrieve(**kwargs)
-    except:
-        pass
-    
-    # this will raise the error
-    try:
-        pooch.retrieve(**kwargs)
-    except Exception as e:
-        if '550' in str(e):
-            message = f'ERROR: Check file permissions: {url}. '
-            logging.log(20, message)
-        return 1, url
-
-    
-def choose_processor(url):
-    """
-    chooses the processor to uncompress if required
-    """
-    known_processors = {
-        pooch.Decompress(): (".gz2", ".gz"),
-        pooch.Untar(): (".tar", ".tgz", ".tar.gz"),
-        pooch.Unzip(): (".zip",),
-        None: "*"
-    }
-    
-    chosen = None
-    for processor, extensions in known_processors.items():
-        for ext in extensions:
-            if ext in url:
-                chosen = processor
-    return chosen
-
-
-def choose_downloader(url):
-    """
-    Will automatically select the correct downloader for the given url.
-    Pass result to pooch.retrieve(downloader=downloader(**kwargs))
-    Parameters
-    ----------
-    url: str
-        the path of a url
-    Returns
-    -------
-    pooch.Downloader as a function. Resulting function Can be called with
-    (username, password, progressbar) options.
-    """
-    from urllib.parse import urlparse as parse_url
-    import pooch
-
-    known_downloaders = {
-        "ftp": pooch.FTPDownloader,
-        "https": pooch.HTTPDownloader,
-        "http": pooch.HTTPDownloader,
-    }
-
-    parsed_url = parse_url(url)
-    if parsed_url.scheme not in known_downloaders:
-        raise ValueError(
-            f"Unrecognized URL protocol '{parsed_url.scheme}' in '{url}'. "
-            f"Must be one of {known_downloaders.keys()}."
-        )
-    downloader = known_downloaders[parsed_url.scheme]
-
-    return downloader
-
-
-def retrieve_files(
+def download(
     url="",
     dest="./",
     name="",
     n_jobs=8,
     login={},
     use_cache=True,
-    year=2012,
     verbose=True,
     **kwargs,
 ):
     """
     A high level function to retrieve data from a url with a wildcard.
-    Limited to fetching one year at a time.
-    TODO: make url string formatting more versatile
+    
     Parameters
     ----------
-    year: int
-        the year to fetch data for
     url: str
-        a url with wildcards (*) and {year} formatter
-        additional formatters will later be an option
+        a url with wildcards (*) formatter. Python string formatters that 
+        match kwarg entries will be replaced. 
     dest: str
-        where the files will be saved to. string formatters
-        will also be replaced (at the moment only supports {year})
+        where the files will be saved to. String formatting supported (as with url)
     use_cache: bool
         if set to True, will use cached url list instead of fetching a
         new list. This is useful for updating data
+    n_jobs: int
+        the number of parallel downloads. Will not show progress bar 
+        when n_jobs > 1
     login: dict
         required if username and passwords are required for protocol
-    is_era5: bool
-        will use the era5 protocol if set to True.
-    cds_var_names: list
-        only if is_era = True, will fetch the given files.
     name: str
         used to keep track in logging. can set this to the data source
     verbose: bool / int
@@ -411,7 +137,272 @@ def retrieve_files(
     if flist is None:
         raise ValueError("Files could not be downloaded")
 
-    return flist
+    return flatten_list(flist)
+
+
+def get_url_list(
+    url,
+    username=None,
+    password=None,
+    cache_path=None,
+    use_cache=True,
+    raise_on_empty=True,
+):
+    """
+    If a url has a wildcard (*) value, remote files will be searched for.
+    Leverages off the `fsspec` package. This doesnt work for all HTTP urls.
+    Parameters
+    ----------
+    username: str
+        if required for given url and protocol (e.g. FTP)
+    password: str
+        if required for given url and protocol (e.g. FTP)
+    cache_path: str
+        the path where the cached files will be stored
+    use_cache: bool
+        if there is a file with cached remote urls, then those
+        values will be returned as a list
+    raise_on_empty: bool
+        if there are no files, raise an error or silently pass
+    Returns
+    -------
+    a sorted list of urls
+    """
+    from pathlib import Path as posixpath
+    from urllib.parse import urlparse
+
+    from aiohttp import ClientResponseError
+    from pandas import Series, read_csv
+
+    if cache_path is None:
+        cache_path = get_cache_path(url)
+    else:
+        cache_path = posixpath(cache_path)
+
+    if cache_path.is_file() and use_cache:
+        flist = read_csv(str(cache_path), index_col=False).iloc[:, 0].to_list()
+        logging.log(15, f"Fetched {len(flist)} files from flist cache: {cache_path}")
+        logging.debug(flist)
+
+        return sorted(flist)
+
+    purl = urlparse(url)
+    protocol = purl.scheme
+    host = purl.netloc
+    path = purl.path
+
+    logging.log(15, f"Fetching filenames from {url}")
+
+    props = {"protocol": protocol}
+    if not protocol.startswith("http"):
+        props.update({"host": host})
+    if username is not None:
+        props["username"] = username
+    if password is not None:
+        props["password"] = password
+
+    fs = fsspec.filesystem(**props)
+    if protocol.startswith("http"):
+        path = f"{protocol}://{host}/{path}"
+        try:
+            flist = fs.glob(path)
+        except ClientResponseError:
+            if raise_on_empty:
+                raise ValueError(f"No files could be found for the url: {url}")
+            else:
+                return []
+    else:
+        flist = [f"{protocol}://{host}{f}" for f in fs.glob(path)]
+
+    no_files = len(flist) == 0
+    if no_files and raise_on_empty:
+        raise ValueError(f"No files could be found for the url: {url}")
+
+    if no_files and not use_cache:
+        return flist
+
+    cache_path.parent.mkdir(exist_ok=True, parents=True)
+    # writing url list to cache file
+    Series(flist, dtype="str").to_csv(str(cache_path), index=False)
+    logging.log(15, f"Cached {len(flist)} urls to: {cache_path}")
+    logging.debug(flist)
+
+    return sorted(flist)
+
+
+def download_urls(
+    urls, 
+    n_jobs=8, 
+    dest_path="./{t:%Y}/{t:%m}", 
+    date_format="%Y%m%d", 
+    **kwargs
+):
+    """
+    Downloads the given list of urls to a specified destination path using
+    the `pooch` package in Python.
+    NOTE: `fsspec` is not used as it fails for some FTP and SFTP protocols.
+    Parameters
+    ----------
+    urls: list
+        the list of URLS to download - may not contain wildcards
+    dest_path: str
+        the location where the files will be downloaded to. May contain
+        date formatters that are labelled with "{t:%fmt} to create subfolders
+    date_format: str
+        the format of the date in the urls that will be used to fill in the
+        date formatters in `dest_path` kwarg. Matches limited to 1970s to 2020s
+    kwargs: key=value
+        will be passed to pooch.retrieve. Can be used to set the downloader
+        with username and password and the processor for unzipping. See
+        `choose_downloader` for more info.
+    Returns
+    -------
+    file names of downloaded urls
+    """
+    def pooch_retrieve_handling(kwargs):
+
+        pooch.get_logger().setLevel(1000)
+        url = kwargs.get('url')
+
+        try:
+            logging.log(15, f"retrieving {url}")
+            return 0, pooch.retrieve(**kwargs)
+        except:
+            pass
+
+        try:
+            # this is for when the server does not allow the file size to be fetched
+            kwargs['downloader'].progressbar = False
+            return 0, pooch.retrieve(**kwargs)
+        except:
+            pass
+
+        # this will raise the error
+        try:
+            pooch.retrieve(**kwargs)
+        except Exception as e:
+            if '550' in str(e):
+                message = f'ERROR: Check file permissions: {url}. '
+                logging.log(20, message)
+            return 1, url
+
+    import pandas as pd
+    from datetime_matcher import DatetimeMatcher
+    from pooch import Unzip
+
+    re_date = DatetimeMatcher()
+    # format will limit between 1970s and 2020s (with exceptions)
+    re_date.format_code_to_regex_map["Y"] = "[12][90][789012][0-9]"
+
+    download_args = []
+    for url in urls:
+        if "{t:" in dest_path:
+            date = re_date.extract_datetime(date_format, url)
+            if date is not None:
+                date = pd.to_datetime(date, format=date_format)
+                fpath = dest_path.format(t=date)
+            else:
+                raise ValueError("No date found in the dest_path")
+        else:
+            fpath = dest_path
+        
+        download_args += dict(
+            url=url, 
+            known_hash=None, 
+            fname=url.split("/")[-1], 
+            path=fpath, 
+            processor=choose_processor(url), 
+            **kwargs),
+    
+    n_jobs = min([n_jobs, len(download_args)])
+    if n_jobs == 1:
+        flist = [pooch_retrieve_handling(d) for d in download_args]
+    elif 1 < n_jobs <= 8:
+        from joblib import Parallel, delayed
+        [setattr(d['downloader'], 'progressbar', False) for d in download_args]
+        flist = Parallel(n_jobs=n_jobs, prefer="threads")(
+            delayed(pooch_retrieve_handling)(d) for d in download_args)
+    else:
+        raise Exception('n_jobs must be between 1 and 8 to avoid too many requests')
+    
+    failed = [f for o, f in flist if o > 0]
+    passed = [f for o, f in flist if o == 0]
+    logging.info(
+        f'SUMMARY: Retrieved={len(passed)}, Failed={len(failed)} listing failed below: \n' + 
+        '\n'.join(failed)
+    )
+    
+    return passed
+
+
+def get_cache_path(url, cache_dir=None):
+    """
+    Creates the path for the cache used to store remote file names
+    Saves time in updating the
+    """
+    import hashlib
+    import tempfile
+    from pathlib import Path as posixpath
+
+    if cache_dir is None:
+        cache_dir = tempfile.gettempdir()
+
+    cache_fname = hashlib.md5(str(url).encode()).hexdigest()
+    cache_path = posixpath(f"{cache_dir}/{cache_fname}")
+
+    return cache_path
+
+    
+def choose_processor(url):
+    """
+    chooses the processor to uncompress if required
+    """
+    known_processors = {
+        pooch.Decompress(): (".gz2", ".gz"),
+        pooch.Untar(): (".tar", ".tgz", ".tar.gz"),
+        pooch.Unzip(): (".zip",),
+        None: "*"
+    }
+    
+    chosen = None
+    for processor, extensions in known_processors.items():
+        for ext in extensions:
+            if ext in url:
+                chosen = processor
+    return chosen
+
+
+def choose_downloader(url):
+    """
+    Will automatically select the correct downloader for the given url.
+    Pass result to pooch.retrieve(downloader=downloader(**kwargs))
+    Parameters
+    ----------
+    url: str
+        the path of a url
+    Returns
+    -------
+    pooch.Downloader as a function. Resulting function Can be called with
+    (username, password, progressbar) options.
+    """
+    from urllib.parse import urlparse as parse_url
+    import pooch
+
+    known_downloaders = {
+        "ftp": pooch.FTPDownloader,
+        "https": pooch.HTTPDownloader,
+        "http": pooch.HTTPDownloader,
+    }
+
+    parsed_url = parse_url(url)
+    if parsed_url.scheme not in known_downloaders:
+        raise ValueError(
+            f"Unrecognized URL protocol '{parsed_url.scheme}' in '{url}'. "
+            f"Must be one of {known_downloaders.keys()}."
+        )
+    downloader = known_downloaders[parsed_url.scheme]
+
+    return downloader
 
 
 def flatten_list(list_of_lists):
