@@ -1,7 +1,7 @@
 
 soccom_liar:
     name: LIARv2 SOCCOM float data (2021-03-23)
-    dest: ../data/raw/floats_LIAR/
+    dest: ../data/raw/floats_liar2/
     url: https://soccompu.princeton.edu/FloatViz_Data/SOCCOM_LRQC_LIAR_netcdf_20210323.zip
     meta: 
         doi: https://library.ucsd.edu/dc/object/bb94601812
@@ -14,7 +14,7 @@ soccom_liar:
 
 socat_pco2:
     name: SOCAT v2020 gridded
-    dest: ../data/raw/SOCAT_pCO2/
+    dest: ../data/raw/socat_pco2/
     url: https://www.socat.info/socat_files/v2020/SOCATv2020_tracks_gridded_monthly.nc.zip
     meta:
         doi: http://www.earth-syst-sci-data.net/8/383/2016/essd-8-383-2016.html
@@ -26,7 +26,7 @@ socat_pco2:
 
 surface_co2:
   name: RECCAP2 Surface ocean pCO2 data products
-  dest: ../data/raw/Surface_CO2/
+  dest: ../data/raw/obs_surface_co2/
   url: ftp://ftp.bgc-jena.mpg.de/pub/outgoing/RECCAP2/32yTa68UrnNxJ6VYndOI/Ocean/Surface_CO2/*
   meta:
     doi: https://reccap2-ocean.github.io
