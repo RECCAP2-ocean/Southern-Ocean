@@ -10,9 +10,9 @@ the RECCAP data interactively.
 from munch import Munch as _munch
 
 
-def reccap_surface_CO2(
+def obs_surface_co2(
     data_dict, 
-    data_surface_CO2_vars=[    
+    specs=[    
         { # variables
             'fgco2_reg': "fgco2_reg",
             'fgco2_glob': "fgco2_glob",
@@ -45,7 +45,70 @@ def reccap_surface_CO2(
     from .download import download 
     
     flist = download(**data_dict, verbose=verbose, **kwargs)
-    obj = _read_reccap2_products(flist, data_surface_CO2_vars)
+    obj = _read_reccap2_products(flist, specs)
+    
+    with open(data_dict['dest'] + '/info_summary.txt', 'w') as f:
+        f.write(obj.__repr__())
+    
+    return obj
+
+
+def model_surface_co2(
+    data_dict, 
+    specs=[
+        { # variables
+            'fgco2_reg': "fgco2_reg",
+            'fgco2_glob': "fgco2_glob",
+            'fgco2': '(fgco2)\w(?!glob|reg)',
+            'spco2': 'spco2',
+            'dpco2': 'dpco2',
+            'alpha': 'alpha',
+            'Kw': 'Kw',
+            'pco2atm': 'pco2atm',
+            'dissicos': 'dissicos',
+            'talkos': 'talkos',
+            'tos': 'tos',
+            'sos': 'sos',
+            'no3os': 'no3os',
+            'sios': 'sios',
+            'po4os': 'po4os',
+            'o2os': 'o2os',
+            'mld': 'mld',
+            'fice': 'fice',
+            'siconc': 'siconc',
+            'icfriver': 'icfriver',
+            'ocfriver': 'ocfriver',
+            'mlotst': 'mlotst'},
+        { # models - code breaks with more than two levels
+            'CNRM_A': 'CNRM-ESM2-1_A',
+            'CNRM_B': 'CNRM-ESM2-1_B',
+            'CNRM_C': 'CNRM-ESM2-1_C',
+            'CNRM_D': 'CNRM-ESM2-1_D',
+            'GOA': 'GOA-COBALT',
+            'NorESM_A': 'NorESM-OC1.2_A',
+            'NorESM_B': 'NorESM-OC1.2_B',
+            'NorESM_C': 'NorESM-OC1.2_C',
+            'NorESM_D': 'NorESM-OC1.2_D',
+            'GEOMAR_A': 'ORCA025-GEOMAR_A',
+            'GEOMAR_B': 'ORCA025-GEOMAR_B',
+            'GEOMAR_C': 'ORCA025-GEOMAR_C',
+            'GEOMAR_D': 'ORCA025-GEOMAR_D',
+            'MRI': 'MRI-ESM2',
+            'BSOSE': 'BSOSE'}
+    ], 
+    verbose=True, 
+    **kwargs
+):
+    """
+    kwargs are passed to data.downloads.retrieve_files
+    """
+    from .download import download 
+    
+    flist = download(**data_dict, verbose=verbose, **kwargs)
+    obj = _read_reccap2_products(flist, specs)
+    
+    with open(data_dict['dest'] + '/info_summary.txt', 'w') as f:
+        f.write(obj.__repr__())
     
     return obj
 
@@ -168,11 +231,19 @@ def _read_reccap2_products(flist, fname_specs=[]):
             if len(tree_list) > 2:
                 return {tree_list[0]: build_tree(tree_list[1:])}
             else:
-                xds = xr.open_mfdataset(tree_list[1], 
-                                        decode_times=False, 
-                                        preprocess=preprocess(decode_times=True))
+                try:
+                    xds = xr.open_mfdataset(tree_list[1], 
+                                            decode_times=False, 
+                                            preprocess=preprocess(decode_times=True, center_months=True))
+                except OSError: 
+                    return {}
                 if len(xds.data_vars) == 1:
                     xds = xds[list(xds.data_vars.keys())[0]]
+                elif len(xds.data_vars) > 1:
+                    for key in xds:
+                        if key in tree_list[1]:
+                            xds = xds[key].assign_attrs(history=xds.attrs['history'])
+                            break
                 return {tree_list[0]: xds}
         return {}
     

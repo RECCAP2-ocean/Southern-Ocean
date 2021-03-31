@@ -44,9 +44,9 @@ def try_run(f):
 @try_run
 def rename_coords(
     xds,
-    lat=['latitude', 'Lat', 'ylat'],
-    lon=['longitude', 'Lon', 'xlon'],
-    time=['Time', 'tmnth'],
+    lat=['latitude', 'Lat', 'ylat', 'y', 'Y'],
+    lon=['longitude', 'Lon', 'xlon', 'x', 'X'],
+    time=['Time', 'tmnth', 't', 'T'],
     region=['reg', 'regions'],
     **kwargs
 ):
@@ -89,6 +89,34 @@ def order_lon_360(xds):
 
 
 @try_run
+def interpolate_coords(xds):
+    dims = []
+    if 'lat' in xds:
+        dims += 'lat',
+    if 'lon' in xds:
+        dims += 'lon',
+    
+    must_interpolate = []
+    for dim in dims:
+        coords = xds[dim].values
+        if ((coords + 0.5) % 1).sum():
+            must_interpolate += dim, 
+    if must_interpolate == []:
+        return xds
+    
+    if 'lon' in must_interpolate:
+        x = np.arange(0.5, 360)
+        xds = xds.interp(lon=x)
+        xds = add_history(xds, 'Interpolated `lon` onto grid centers')
+    if 'lat' in must_interpolate:
+        y = np.arange(-89.5, 90)
+        xds = xds.interp(lat=y)
+        xds = add_history(xds, 'Interpolated `lat` onto grid centers')
+    
+    return xds
+        
+    
+@try_run
 def transpose(xds):
     reccap_order = ["lon", "lat", "depth", "time"]
     coords = list(xds.dims)
@@ -110,6 +138,9 @@ def time_decoder(xds):
     if 'time' not in xds:
         return xds
 
+    if xds.time.attrs.get('units', None):
+        return xr.decode_cf(xds)
+    
     t = xds.time.values.astype(int)
 
     # nies workaround (they use seconds since 1980)
@@ -147,6 +178,7 @@ def preprocess(
     decode_times=False, 
     rename_coordinates=True, 
     center_months=True,
+    interpolate_coordinates=True, 
     lon_0_360=True,
     transpose_dims=True,
 ):
@@ -168,6 +200,8 @@ def preprocess(
             ds = center_time_on_15th(ds)
         if lon_0_360:
             ds = order_lon_360(ds)
+        if interpolate_coordinates:
+            ds = interpolate_coords(ds)
         if transpose_dims:
             ds = transpose(ds)
         return ds

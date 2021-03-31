@@ -11,6 +11,7 @@ def style_line_subplot(ax, add_zero_line=True, xlim=None, y_range=None):
     
     plt.xticks(rotation=0, ha='center')
     plt.xlabel('')
+    plt.title('')
     
     if ax.get_ylim()[0] < 0 < ax.get_ylim()[1]:
         ax.axhline(0, color='k', ls='--', lw=0.5, zorder=0)
@@ -30,7 +31,18 @@ def style_line_subplot(ax, add_zero_line=True, xlim=None, y_range=None):
     return ax
 
 
-def plot_ensemble_lines(da, ax=None, dim='variable', draw_stdev=True, y_range=None, color='C0', name='', **kwargs):
+def plot_ensemble_lines(
+    da, 
+    ax=None, 
+    dim='variable', 
+    draw_mean=True, 
+    draw_members=True, 
+    draw_stdev=True, 
+    y_range=None, 
+    color='C0', 
+    name='', 
+    **kwargs
+):
     if ax is None:
         ax = plt.gca()
     
@@ -45,10 +57,13 @@ def plot_ensemble_lines(da, ax=None, dim='variable', draw_stdev=True, y_range=No
         upr = avg + std
         lwr = avg - std
         # drawn first to maintain zorder
-        ax.fill_between(x, upr, lwr, color=color, alpha=0.2, **kwargs)
-        
-    ens.plot(c=color, lw=0.5, alpha=0.6, ax=ax, add_legend=False, hue=dim, **kwargs)
-    avg.plot(c=color, lw=2.5, alpha=1.0, ax=ax, label=name, **kwargs)
+        ax.fill_between(x, upr, lwr, color=color, alpha=0.3, lw=0, **kwargs)
+    
+    if draw_members:
+        ens.plot(c=color, lw=0.5, alpha=0.6, ax=ax, add_legend=False, hue=dim, **kwargs)
+    
+    if draw_mean:
+        avg.plot(c=color, lw=2.5, alpha=1.0, ax=ax, label=name, **kwargs)
     
     xlim = x.min(), x.max()
     ax = style_line_subplot(ax, add_zero_line=False, xlim=xlim, y_range=y_range)
