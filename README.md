@@ -10,6 +10,6 @@ git clone https://github.com/RECCAP2-ocean/Southern-Ocean/
 mv Southern-Ocean RECCAP2-SouthernOcean
 cd RECCAP2-SouthernOcean
 
-pip install -r requirements.txt
+pip install --user -r requirements.txt
 ```
 You will be asked for your username and password to access this repository
