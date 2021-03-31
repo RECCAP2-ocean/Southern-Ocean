@@ -1,4 +1,4 @@
-# RECCCAP2 : Southern-Ocean
+# RECCAP2 : Southern-Ocean
 code for processing the Southern Ocean chapter of RECCAP 2
 
 ### Cloning and installing
