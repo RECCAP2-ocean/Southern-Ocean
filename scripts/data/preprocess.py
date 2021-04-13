@@ -14,15 +14,17 @@ import pandas as pd
 import numpy as np
 
 
-def add_history(xds, message):
+def add_processing(xds, message):
     time = pd.Timestamp.today().strftime('%Y-%m-%d')
     message = message.replace("'", "").replace('"', "")
     
-    hist = xds.attrs.get('history', '').strip()
+    prefix = f" [RECCAP @ {time}]"
+    prefix = ""
+    hist = xds.attrs.get('processing', '').strip()
     hist = hist if hist.endswith(';') or hist == '' else hist + '; '
-    hist += f' [RECCAP @ {time}] {message}; '
+    hist += f'{prefix} {message}; '
     
-    xds = xds.assign_attrs(history=hist.strip())
+    xds = xds.assign_attrs(processing=hist.strip())
     
     return xds
 
@@ -44,9 +46,9 @@ def try_run(f):
 @try_run
 def rename_coords(
     xds,
-    lat=['latitude', 'Lat', 'ylat', 'y', 'Y'],
-    lon=['longitude', 'Lon', 'xlon', 'x', 'X'],
-    time=['Time', 'tmnth', 't', 'T'],
+    lat=['LATITUDE', 'latitude', 'Lat', 'ylat', 'y', 'Y'],
+    lon=['LONGITUDE', 'longitude', 'Lon', 'xlon', 'x', 'X'],
+    time=['TIME', 'Time', 'tmnth', 't', 'T'],
     region=['reg', 'regions'],
     **kwargs
 ):
@@ -68,7 +70,7 @@ def rename_coords(
     xds = xds.rename(**rename)
     
     if rename != {}:
-        xds = add_history(xds, f'renamed variables to match protocol {str(rename)}')
+        xds = add_processing(xds, f'renamed {str(rename)}')
     
     return xds
 
@@ -83,7 +85,7 @@ def order_lon_360(xds):
     xds = xds.assign_coords(lon=lambda a: a.lon % 360).sortby('lon')
     
     if any(lon != xds.lon.values):
-        xds = add_history(xds, 'Flipped longitudes 0:360')
+        xds = add_processing(xds, 'flipped lon 0:360')
 
     return xds 
 
@@ -107,11 +109,11 @@ def interpolate_coords(xds):
     if 'lon' in must_interpolate:
         x = np.arange(0.5, 360)
         xds = xds.interp(lon=x)
-        xds = add_history(xds, 'Interpolated `lon` onto grid centers')
+        xds = add_processing(xds, 'interp lon onto grid centers')
     if 'lat' in must_interpolate:
         y = np.arange(-89.5, 90)
         xds = xds.interp(lat=y)
-        xds = add_history(xds, 'Interpolated `lat` onto grid centers')
+        xds = add_processing(xds, 'interp lat onto grid centers')
     
     return xds
         
@@ -120,6 +122,7 @@ def interpolate_coords(xds):
 def transpose(xds):
     reccap_order = ["lon", "lat", "depth", "time"]
     coords = list(xds.dims)
+    old_coords = list(xds.dims)
     
     order = []
     for key in reccap_order:
@@ -127,8 +130,10 @@ def transpose(xds):
             order += key,
             coords.remove(key)
     order += coords
-    xds = xds.transpose(*order)
-    xds = add_history(xds, f'Transposed dimensions to ({str(order)[1:-1]})')
+    
+    if old_coords != order:
+        xds = xds.transpose(*order)
+        xds = add_processing(xds, f'transposed ({str(old_coords)[1:-1]})')
 
     return xds
 
@@ -146,6 +151,7 @@ def time_decoder(xds):
     # nies workaround (they use seconds since 1980)
     if t[0] > 10000:
         t = (t / 86400).astype(int)
+        add_processing(xds, f'time units converted to days since from seconds')
     
     xds['time'] = xr.DataArray(
         data=t, dims=('time',), 
@@ -161,15 +167,16 @@ def center_time_on_15th(xds):
     if 'time' not in xds:
         return xds
     
-    dt = np.timedelta64(14, 'D')
-    t = xds.time.values.astype('datetime64[M]') + dt
-    
-    xds['time'] = xr.DataArray(
-        data=t, dims=['time'], coords={'time': t})
-    
-    xds = xds.sel(time=slice('1980', '2018'))
-    xds = add_history(xds, f'Time set to 15th of each month and 198[0/5]-2018')
-    
+    if xds.time.dt.day[0] != 15:
+
+        dt = np.timedelta64(14, 'D')
+        t = xds.time.values.astype('datetime64[M]') + dt
+
+        xds['time'] = xr.DataArray(
+            data=t, dims=['time'], coords={'time': t})
+
+        xds = xds.sel(time=slice('1980', '2018'))
+        xds = add_processing(xds, f'time centered on 15th')
     
     return xds
     
@@ -189,7 +196,7 @@ def preprocess(
             preprocess=data.preprocess(decode_times=True))
         
     There are several options that can be switched on or off with boolean.
-    All changes are documented and appended to xds.attrs.history
+    All changes are documented and appended to xds.attrs.processing
     """
     def reccap2_dataprep(ds):
         if rename_coordinates:
@@ -204,6 +211,10 @@ def preprocess(
             ds = interpolate_coords(ds)
         if transpose_dims:
             ds = transpose(ds)
+        
+        key = list(ds.data_vars.keys())[0]
+        ds[key].attrs['processing'] = ds.attrs.get('processing', '')
+        
         return ds
     return reccap2_dataprep
 

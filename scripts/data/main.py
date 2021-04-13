@@ -80,21 +80,31 @@ def model_surface_co2(
             'ocfriver': 'ocfriver',
             'mlotst': 'mlotst'},
         { # models - code breaks with more than two levels
+            'BSOSE': 'BSOSE',
             'CNRM_A': 'CNRM-ESM2-1_A',
             'CNRM_B': 'CNRM-ESM2-1_B',
             'CNRM_C': 'CNRM-ESM2-1_C',
             'CNRM_D': 'CNRM-ESM2-1_D',
-            'GOA': 'GOA-COBALT',
-            'NorESM_A': 'NorESM-OC1.2_A',
-            'NorESM_B': 'NorESM-OC1.2_B',
-            'NorESM_C': 'NorESM-OC1.2_C',
-            'NorESM_D': 'NorESM-OC1.2_D',
+            'ECCO_A': 'ECCO-Darwin_A',
+            'ETHZ_A': 'CESM-ETHZ_A',
+            'ETHZ_B': 'CESM-ETHZ_B',
+            'ETHZ_C': 'CESM-ETHZ_C',
+            'ETHZ_D': 'CESM-ETHZ_D',
+            'FESOM_A': 'FESOM_REcoM_LR_A', 
+            'FESOM_B': 'FESOM_REcoM_LR_B', 
+            'FESOM_C': 'FESOM_REcoM_LR_C', 
+            'FESOM_D': 'FESOM_REcoM_LR_D', 
             'GEOMAR_A': 'ORCA025-GEOMAR_A',
             'GEOMAR_B': 'ORCA025-GEOMAR_B',
             'GEOMAR_C': 'ORCA025-GEOMAR_C',
             'GEOMAR_D': 'ORCA025-GEOMAR_D',
+            'GOA': 'GOA-COBALT',
             'MRI': 'MRI-ESM2',
-            'BSOSE': 'BSOSE'}
+            'NorESM_A': 'NorESM-OC1.2_A',
+            'NorESM_B': 'NorESM-OC1.2_B',
+            'NorESM_C': 'NorESM-OC1.2_C',
+            'NorESM_D': 'NorESM-OC1.2_D',
+        }
     ], 
     verbose=True, 
     **kwargs
@@ -187,15 +197,22 @@ class _RECCAP_dict(_munch):
         def get_info(obj):
             unit = obj.attrs.get('units', '-')
             dims = ".".join([f"{k}({obj[k].size})" for k in obj.dims])
-            unit = f"[UNITS]: {unit}; "
-            dims = f"[DIMS]: {dims}"
-            info = f"{unit: <32}{dims}"
+            hist = obj.attrs.get('processing', '')
+            
+            unit = f"[UNITS] {unit} "
+            dims = f"[DIMS] {dims}"
+            hist = (
+                f"[PREPROCESSING] {hist}"
+                .replace(": ", "=")
+                .replace("{", "[")
+                .replace("}", "]"))
+            info = f"{unit: <25}{dims: <40}{hist}"
             return info
         def walk_through_dictionary(d):
             new_dict = {}
             for k, v in d.items():
                 if isinstance(v, dict):
-                    new_dict[f"{k} {'-'*(76 - len(k))}"] = walk_through_dictionary(v)
+                    new_dict[f"{k} {'-'*(100 - len(k))}"] = walk_through_dictionary(v)
                 elif isinstance(v, xr.DataArray):
                     new_dict[f"{k: <10}"] = get_info(v)
             return new_dict
@@ -207,7 +224,7 @@ class _RECCAP_dict(_munch):
         printable = walk_through_dictionary(self)
         pretty = f"{str(self.__class__)}"
         pretty += json.dumps(printable, indent=2, sort_keys=True)
-        pretty = re.sub('["{},:;]', '', pretty)
+        pretty = re.sub('[",:{}]', '', pretty)
         
         m = self.get('not_matched', [])
         if m != []:
@@ -242,7 +259,7 @@ def _read_reccap2_products(flist, fname_specs=[]):
                 elif len(xds.data_vars) > 1:
                     for key in xds:
                         if key in tree_list[1]:
-                            xds = xds[key].assign_attrs(history=xds.attrs['history'])
+                            xds = xds[key].assign_attrs(processing=xds.attrs.get('processing', ''))
                             break
                 return {tree_list[0]: xds}
         return {}
