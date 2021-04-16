@@ -126,6 +126,7 @@ def model_surface_co2(
 def socat2020(
     data_dict, 
     variables=['fco2_ave_unwtd', 'fco2_std_unwtd'], 
+    processed_dest='../data/processed/socat2020_monthlygridded.nc', 
     verbose=True, 
     **kwargs
 ):
@@ -133,19 +134,36 @@ def socat2020(
     import xarray as xr
     from .preprocess import preprocess 
     from .download import download, flatten_list as _flatten, read_catalog
+    from pathlib import Path as path
+    from xarray import open_dataset
+    
+    if path(processed_dest).is_file():
+        return open_dataset(processed_dest)
     
     socat = xr.open_mfdataset(
         download(**data_dict, verbose=verbose, **kwargs), 
         preprocess=preprocess(decode_times=False)
     )[variables]
     
+    socat.to_netcdf(processed_dest, encoding={k: dict(zlib=True, complevel=4) for k in socat})
+    
     return socat
 
 
-def soccom_float_liar(data_dict, verbose=True, **kwargs):
+def soccom_float_liar(
+    data_dict, 
+    processed_dest='../data/processed/soccom_float_liar.nc', 
+    verbose=True, 
+    **kwargs
+):
     from .non_reccap_data import grid_soccom_argo_float
     from .preprocess import preprocess 
     from .download import download, flatten_list as _flatten, read_catalog
+    from pathlib import Path as path
+    from xarray import open_dataset
+    
+    if path(processed_dest).is_file():
+        return open_dataset(processed_dest)
     
     flist = _flatten(download(**data_dict, verbose=verbose, **kwargs))
     flist = [f for f in flist if f.endswith('.nc')]
@@ -168,13 +186,19 @@ def soccom_float_liar(data_dict, verbose=True, **kwargs):
         TALK_LIAR='talk',
         DIC_LIAR='dissic',
     )
+    
+    liar.to_netcdf(processed_dest, encoding={k: dict(zlib=True, complevel=4) for k in liar})
 
     return liar
 
 
 class _RECCAP_dict(_munch):
-    
-    def data(self, dim_name='variable'):
+        
+    @property
+    def data(self):
+        if hasattr(self, '_data'):
+            return self._data
+        
         from xarray import concat, merge, DataArray
         from pandas import Index
         is_array = [isinstance(self[k], DataArray) for k in self]
@@ -185,13 +209,16 @@ class _RECCAP_dict(_munch):
                 xda = concat([self[k] for k in self], dim=idx)
             except:
                 xda = merge([self[k] for k in self])
-            return xda
+            self._data = xda
+            return self._data
         else:
             dataarrays = []
             for k in self:
                 if isinstance(self[k], self.__class__):
-                    dataarrays += self[k].data(),
-            return merge(dataarrays)
+                    dataarrays += self[k].data,
+            xds = merge(dataarrays)
+            self._data = xds
+            return self._data
         
     def __repr__(self):
         def get_info(obj):
