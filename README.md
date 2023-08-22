@@ -1,5 +1,5 @@
 # RECCAP2 : Southern-Ocean
-code for processing the Southern Ocean chapter of RECCAP 2
+code for data analysis and figure creation of the Southern Ocean chapter of RECCAP 2
 
 ### Cloning and installing
 
