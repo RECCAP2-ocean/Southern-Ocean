@@ -3,8 +3,17 @@ code for data analysis and figure creation of the Southern Ocean chapter of RECC
 
 ## Figures 
 
-Figures are organised based on common datasets used and who created the figures. For example, all $p$CO$_2$-related figures are grouped in the same folder. 
+Figures are organised based on common datasets used and who created the figures. For example, all $p\mathrm{CO}_2$-related figures are grouped in the same folder.
+
+The following initials refer to the creators:
+
+- `cn` = Cara Nissen
+- `jh` = Judith Hauck
+- `lg` = Luke Gregor (gregorl@ethz.ch)
+- `lp` = Lavinia Patara
+- `mh` = Mark Hague
 
 ### Data
 
-Note, this repository assumes that you have downloaded the full RECCAP2 repository from Zenodo (https://doi.org/10.5281/zenodo.7990822)
+We provide scripts to process the raw data from the RECCAP2 repository on Zenodo (https://doi.org/10.5281/zenodo.7990822). 
+However, we also provide the aggregated data used to create the figures.
