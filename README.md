@@ -4,6 +4,7 @@ code for data analysis and figure creation of the Southern Ocean chapter of RECC
 ## Figures 
 
 Figures are organised based on common datasets used and who created the figures. For example, all $p\mathrm{CO}_2$-related figures are grouped in the same folder.
+The scripts in each folder may have their own requirements. See the folder-level README files to find out what the package requirements are. 
 
 The following initials refer to the creators:
 
