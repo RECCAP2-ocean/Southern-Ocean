@@ -1,4 +1,4 @@
-# RECCAP2 : Southern-Ocean Figures
+# RECCAP2 : Southern-Ocean Analysis and Figures
 code for data analysis and figure creation of the Southern Ocean chapter of RECCAP 2
 
 ## Figures 
