@@ -1,18 +1,9 @@
 # RECCAP2 : Southern-Ocean Figures
 code for data analysis and figure creation of the Southern Ocean chapter of RECCAP 2
 
-### Cloning and installing
+## Figures 
 
-In your bash terminal:
-```bash
-git clone https://github.com/RECCAP2-ocean/Southern-Ocean/
-
-mv Southern-Ocean RECCAP2-SouthernOcean
-cd RECCAP2-SouthernOcean
-
-pip install --user -r requirements.txt
-```
-You will be asked for your username and password to access this repository
+Figures are organised based on common datasets used and who created the figures. For example, all $p$CO$_2$-related figures are grouped in the same folder. 
 
 ### Data
 
