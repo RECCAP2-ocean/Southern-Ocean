@@ -13,7 +13,7 @@ The notebook [RECCAP2-SO-monthly-spco2+socat+sst.ipynb](RECCAP2-SO-monthly-spco2
 
 The notebook creates the netCDF file [RECCAP2-SO-monthly-spco2+socat+sst.nc](RECCAP2-SO-monthly-spco2+socat+sst.nc). This file contains monthly data of the area-weighted averages for the whole SO, STSS, SPSS, and ICE biomes (see [https://reccap2-ocean.github.io/regions/](https://reccap2-ocean.github.io/regions/)).
 
-The file has the following structure:
+The file has the following structure:  
 ![screenshot of xarray data structure](./data_structure.png)
 
 ## Scripts 
