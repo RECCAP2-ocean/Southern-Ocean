@@ -21,8 +21,8 @@
 -	Figure S14: see Fig. 10, here for 1985-2000
 -	Figure S15: see Fig. 10, here for 2001-2018
 -	Figure S16: see Fig. 10, trends 1985-2018 in $\mathrm{CO}_2$ flux and SST for individual models
+  
 ## Data
-
 All scripts require a download of the full RECCAP2 dataset. The full dataset can be downloaded from [https://doi.org/10.5281/zenodo.7990822](https://doi.org/10.5281/zenodo.7990822).
 
 In addition, the notebook [RECCAPv2_SO_Fig10_CO2_flux_trends.ipynb](RECCAPv2_SO_Fig10_CO2_flux_trends.ipynb) requires satellite-based SST data, in particular NOAA’s Extended Reconstructed Sea Surface Temperature, version 5 (ERSSTv5). These data can be downloaded from [https://doi.org/10.7289/V5T72FNM](https://doi.org/10.7289/V5T72FNM) (last access August 30, 2023). 
@@ -48,6 +48,13 @@ In addition, the notebook [RECCAPv2_SO_Fig10_CO2_flux_trends.ipynb](RECCAPv2_SO_
 -	Figure S14: see script for Fig. 10
 -	Figure S15: see script for Fig. 10
 -	Figure S16: see script for Fig. 10
+
+Additionally, the following are called in `RECCAPv2_SO_Fig4_5_seasonal_mean_CO2_flux_2015_2018.ipynb`: 
+-	`annualmean.ipynb`
+-	`djf_mean.ipynb`
+-	`mam_mean.ipynb`
+-	`jja_mean.ipynb`
+-	`son_mean.ipynb`
 
 To run these scripts, you must have the required packages installed
 
