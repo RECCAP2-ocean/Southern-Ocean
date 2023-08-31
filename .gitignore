@@ -1,5 +1,4 @@
 # repo specific ignores
-**/*.nc
 data/**
 **/*.tar*
 **/*.zip*
