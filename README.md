@@ -8,11 +8,11 @@ The scripts in each folder may have their own requirements. See the folder-level
 
 The following initials refer to the creators:
 
-- `cn` = Cara Nissen
-- `jh` = Judith Hauck
+- `cn` = Cara Nissen (cara.nissen@awi.de)
+- `jh` = Judith Hauck (Judith.Hauck@awi.de)
 - `lg` = Luke Gregor (gregorl@ethz.ch)
-- `lp` = Lavinia Patara
-- `mh` = Mark Hague
+- `lp` = Lavinia Patara (lpatara@geomar.de)
+- `mh` = Mark Hague (mark.hague@usys.ethz.ch)
 
 ### Data
 
