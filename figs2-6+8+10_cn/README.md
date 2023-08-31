@@ -1,26 +1,26 @@
 # RECCAP Southern Ocean figures by Cara Nissen
 
 ## Figures
--	Figure 2: annual mean CO$_{2}$ flux, 1985-2018
--	Figure 3: natural vs. anthropogenic components of CO$_{2}$ flux + climate effect
--	Figure 4: winter mean CO$_{2}$ flux, 2015-2018
--	Figure 5: summer mean CO$_{2}$ flux, 2015-2018
--	Figure 6, part 1: seasonality of CO$_{2}$ flux, 1985-2018
--	Figure 6, part 2: maps of season of max. CO$_{2}$ uptake, 1985-2018
--	Figure 8: time series 1985-2018 of CO$_{2}$ flux
--	Figure 10: trends in CO$_{2}$ flux and SST, 1985-2018
--	Figure S1 time series of CO$_{2}$ flux in \textit{simB}, stored trends are loaded into script for Fig. 8 
+-	Figure 2: annual mean CO$_2$ flux, 1985-2018
+-	Figure 3: natural vs. anthropogenic components of CO$_2$ flux + climate effect
+-	Figure 4: winter mean CO$_2$ flux, 2015-2018
+-	Figure 5: summer mean CO$_2$ flux, 2015-2018
+-	Figure 6, part 1: seasonality of CO$_2$ flux, 1985-2018
+-	Figure 6, part 2: maps of season of max. CO$_2$ uptake, 1985-2018
+-	Figure 8: time series 1985-2018 of CO$_2$ flux
+-	Figure 10: trends in CO$_2$ flux and SST, 1985-2018
+-	Figure S1 time series of CO$_2$ flux in \textit{simB}, stored trends are loaded into script for Fig. 8 
 -	Figure S2: see Fig. 6, part 1, here including MPI model
--	Figure S5: see Figs 2, 4 & 5, zonally averaged CO$_{2}$ flux 1985-2018 for individual models
+-	Figure S5: see Figs 2, 4 & 5, zonally averaged CO$_2$ flux 1985-2018 for individual models
 -	Figure S6: see Fig. 3, further decomposition of climate effect 
 -	Figure S7: see Fig. 3, further regional decomposition
 -	Figure S8: see Fig. 2, here for 2015-2018
--	Figure S9: see Fig. 6, part 2: individual $p$CO$_{2}$-data products
+-	Figure S9: see Fig. 6, part 2: individual $p$CO$_2$-data products
 -	Figure S10: see Fig. 6, part 1, further regional decomposition 
 -	Figure S12: see Fig. 8, further regional decomposition
 -	Figure S14: see Fig. 10, here for 1985-2000
 -	Figure S15: see Fig. 10, here for 2001-2018
--	Figure S16: see Fig. 10, trends 1985-2018 in CO$_{2}$ flux and SST for individual models
+-	Figure S16: see Fig. 10, trends 1985-2018 in CO$_2$ flux and SST for individual models
 ## Data
 
 All scripts require a download of the full RECCAP2 dataset. The full dataset can be downloaded from [https://doi.org/10.5281/zenodo.7990822](https://doi.org/10.5281/zenodo.7990822).
