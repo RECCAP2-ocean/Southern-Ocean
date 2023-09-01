@@ -1,12 +1,9 @@
-# RECCAP Southern Ocean figures by Luke Gregor
+# RECCAP-SO: pCO$_2$-related
 
-## Figures
-
-- Figure 1: Map of the Southern Ocean Biomes with an overlay of the old RECCAP 1 boundaries as dashed lines
-- Figure 7: seasonal drivers of $p\mathrm{CO}_2$ (thermal / non-thermal decomposition)
-- Figure 9: Comparison of $p\mathrm{CO}_2$ for different data classes with SOCAT
-- Figure S11: (see Fig. 7) heatmap of difference between $p\mathrm{CO}_2$ thermal and non-thermal for all data products
-- Figure S13: (see Fig. 9) regional and seasonal breakdown of the SOCAT comparison
+- **Figure 7**: seasonal drivers of $p\mathrm{CO}_2$ (thermal / non-thermal decomposition)
+- **Figure 9**: Comparison of $p\mathrm{CO}_2$ for different data classes with SOCAT
+- **Figure S11**: (see Fig. 7) heatmap of difference between $p\mathrm{CO}_2$ thermal and non-thermal for all data products
+- **Figure S13**: (see Fig. 9) regional and seasonal breakdown of the SOCAT comparison
 
 ## Data
 
