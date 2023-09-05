@@ -17,4 +17,5 @@ The following initials refer to the creators:
 ### Data
 
 We provide scripts to process the raw data from the RECCAP2 repository on Zenodo (https://doi.org/10.5281/zenodo.7990822). 
-However, we also provide the aggregated data used to create the figures.
+
+The aggregated data used to create the figures can be found in the RECCAP2-SO repository on Zenodo (URL to be added). These files should be placed in the `data` directory. 
