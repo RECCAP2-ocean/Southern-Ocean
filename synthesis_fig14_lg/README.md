@@ -22,4 +22,3 @@ Data is stored in the `data` folder and contains information for the two section
 - `cartopy`
 - `matplotlib`
 - `pooch`
-
